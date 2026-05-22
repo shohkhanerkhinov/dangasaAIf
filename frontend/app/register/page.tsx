@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import Logo from "@/components/ui/Logo";
 import { useAppStore } from "@/store/useAppStore";
 import { t, type Locale } from "@/lib/i18n";
+import { apiRequest } from "@/lib/api";
 
 const languages: { code: Locale; label: string; flag: string }[] = [
   { code: "en", label: "EN", flag: "🇺🇸" },
@@ -73,20 +74,20 @@ export default function RegisterPage() {
     if (!form.role) { toast.error("Please select your role"); return; }
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          first_name: form.firstName,
-          last_name: form.lastName,
-          email: form.email,
-          password: form.password,
-          institution_type: form.institution,
-          role: form.role,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || t(locale, "registerError"));
+      const data = await apiRequest<{ user: { id: number; first_name: string; last_name: string; email: string; role: "teacher" | "student"; institution_type: "school" | "college" | "institute" | "university" }; access_token: string }>(
+        "/api/auth/register",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            first_name: form.firstName,
+            last_name: form.lastName,
+            email: form.email,
+            password: form.password,
+            institution_type: form.institution,
+            role: form.role,
+          }),
+        }
+      );
       setUser(data.user, data.access_token);
       toast.success(t(locale, "registerSuccess"));
       router.push("/dashboard");

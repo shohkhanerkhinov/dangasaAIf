@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import Logo from "@/components/ui/Logo";
 import { useAppStore } from "@/store/useAppStore";
 import { t, type Locale } from "@/lib/i18n";
+import { apiRequest } from "@/lib/api";
 
 const languages: { code: Locale; label: string; flag: string }[] = [
   { code: "en", label: "EN", flag: "🇺🇸" },
@@ -41,13 +42,13 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:8000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: form.email, password: form.password }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || t(locale, "loginError"));
+      const data = await apiRequest<{ user: { id: number; first_name: string; last_name: string; email: string; role: "teacher" | "student"; institution_type: "school" | "college" | "institute" | "university" }; access_token: string }>(
+        "/api/auth/login",
+        {
+          method: "POST",
+          body: JSON.stringify({ email: form.email, password: form.password }),
+        }
+      );
       setUser(data.user, data.access_token);
       toast.success(t(locale, "loginSuccess"));
       router.push("/dashboard");
